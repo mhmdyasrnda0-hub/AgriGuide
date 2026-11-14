@@ -1,0 +1,241 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+@theme {
+  --font-sans: "Manrope", "IBM Plex Sans Arabic", system-ui, -apple-system, sans-serif;
+  --font-arabic: "IBM Plex Sans Arabic", "Manrope", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-fs-blue: #1769E0;
+  --color-fs-navy: #0B2A5B;
+  --color-fs-soft-blue: #EAF3FF;
+  --color-fs-pale: #F7FAFE;
+  --color-fs-text: #12233F;
+  --color-fs-muted: #66758A;
+  --color-fs-border: #DCE7F5;
+  --color-fs-success: #19A974;
+  --color-fs-warning: #F2A93B;
+  --color-fs-danger: #E45C67;
+
+  /* Green theme palette */
+  --color-ag-green: #2D6A4F;
+  --color-ag-green-light: #40916C;
+  --color-ag-green-pale: #D8F3DC;
+  --color-ag-green-dark: #1B4332;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    color: #12233F;
+    background-color: #F7FAFE;
+    scroll-behavior: smooth;
+  }
+
+  html[dir="rtl"] {
+    font-family: var(--font-arabic);
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Global smooth transitions */
+  * {
+    transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+}
+
+/* ========================================
+   PAGE TRANSITIONS — smooth & spring-like
+   ======================================== */
+
+@keyframes fs-fade-slide-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes fs-fade-slide-down {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -12px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes fs-drawer-slide-end-ltr {
+  from {
+    opacity: 0;
+    transform: translate3d(28px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes fs-drawer-slide-end-rtl {
+  from {
+    opacity: 0;
+    transform: translate3d(-28px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes fs-drawer-slide-start-ltr {
+  from {
+    opacity: 0;
+    transform: translate3d(-28px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes fs-drawer-slide-start-rtl {
+  from {
+    opacity: 0;
+    transform: translate3d(28px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes fs-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fs-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+}
+
+@keyframes fs-pop-in {
+  0%   { opacity: 0; transform: scale(0.90); }
+  60%  { opacity: 1; transform: scale(1.03); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* =====================
+   Animation classes
+   ===================== */
+
+.fs-view-transition {
+  animation: fs-fade-slide-up 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.fs-view-transition-down {
+  animation: fs-fade-slide-down 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.fs-fade-in {
+  animation: fs-fade-in 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.fs-scale-in {
+  animation: fs-scale-in 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.fs-pop-in {
+  animation: fs-pop-in 360ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.fs-drawer-end {
+  animation: fs-drawer-slide-end-ltr 350ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+html[dir="rtl"] .fs-drawer-end {
+  animation: fs-drawer-slide-end-rtl 350ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.fs-drawer-start {
+  animation: fs-drawer-slide-start-ltr 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+html[dir="rtl"] .fs-drawer-start {
+  animation: fs-drawer-slide-start-rtl 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Staggered children delay classes */
+.fs-stagger-1 { animation-delay: 60ms; }
+.fs-stagger-2 { animation-delay: 120ms; }
+.fs-stagger-3 { animation-delay: 180ms; }
+.fs-stagger-4 { animation-delay: 240ms; }
+.fs-stagger-5 { animation-delay: 300ms; }
+
+/* =====================
+   Glass morphism helpers
+   ===================== */
+.glass-card {
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+}
+
+.glass-card-dark {
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+}
+
+/* =====================
+   Reduced motion
+   ===================== */
+@media (prefers-reduced-motion: reduce) {
+  .fs-view-transition,
+  .fs-view-transition-down,
+  .fs-fade-in,
+  .fs-scale-in,
+  .fs-pop-in,
+  .fs-drawer-end,
+  .fs-drawer-start {
+    animation-duration: 0.01ms !important;
+    transform: none !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* =====================
+   Print styles
+   ===================== */
+@media print {
+  aside,
+  nav,
+  .no-print {
+    display: none !important;
+  }
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+  body {
+    background: #ffffff !important;
+  }
+}

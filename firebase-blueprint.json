@@ -1,0 +1,285 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Private user account preferences and profile metadata isolated per user.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "preferredLanguage": {
+          "type": "string",
+          "enum": ["en", "ar"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "preferredLanguage", "createdAt", "updatedAt"]
+    },
+    "Farm": {
+      "title": "Farm",
+      "description": "Geospatial farm profile including boundary polygon, calculated area, crop history, water availability, and confirmed soil values.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "locationLabel": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "centerLat": {
+          "type": "number"
+        },
+        "centerLng": {
+          "type": "number"
+        },
+        "locationAccuracyMode": {
+          "type": "string",
+          "enum": ["polygon", "gps", "point", "approximate"]
+        },
+        "boundary": {
+          "type": "array"
+        },
+        "areaHectares": {
+          "type": "number"
+        },
+        "previousCrop": {
+          "type": "string",
+          "enum": ["wheat", "maize", "sunflower", "soybean", "clover", "fallow", "unknown"]
+        },
+        "currentCrop": {
+          "type": "string",
+          "enum": ["wheat", "maize", "sunflower", "soybean", "clover", "none", "unknown"]
+        },
+        "season": {
+          "type": "string",
+          "enum": ["winter", "spring", "summer", "autumn"]
+        },
+        "waterAvailability": {
+          "type": "string",
+          "enum": ["abundant", "moderate", "limited", "scarce"]
+        },
+        "goal": {
+          "type": "string",
+          "enum": ["yield_stability", "water_conservation", "soil_recovery", "drought_resilience", "forage_production"]
+        },
+        "soilData": {
+          "type": "object"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "ownerId", "name", "centerLat", "centerLng", "locationAccuracyMode", "season", "waterAvailability", "goal", "createdAt", "updatedAt"]
+    },
+    "EnvironmentalRecord": {
+      "title": "EnvironmentalRecord",
+      "description": "Real Earth-observation snapshot retrieved from NASA POWER and geospatial connectors for a farm.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "farmId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "fetchedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sourceSummary": {
+          "type": "string",
+          "maxLength": 240
+        },
+        "payload": {
+          "type": "object"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "ownerId", "farmId", "fetchedAt", "sourceSummary", "payload", "createdAt"]
+    },
+    "FieldScan": {
+      "title": "FieldScan",
+      "description": "AI-assisted crop, soil surface, or soil lab document assessment linked to user input.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "farmId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "scanType": {
+          "type": "string",
+          "enum": ["crop_photo", "soil_surface", "soil_report_ocr"]
+        },
+        "qualityStatus": {
+          "type": "string",
+          "enum": ["usable", "low_quality", "unsupported_crop", "irrelevant"]
+        },
+        "detectedCrop": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "resultPayload": {
+          "type": "object"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "ownerId", "farmId", "scanType", "qualityStatus", "resultPayload", "createdAt"]
+    },
+    "DecisionRun": {
+      "title": "DecisionRun",
+      "description": "Audit-preserved crop suitability ranking run with input snapshot, source timestamps, and rule version.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "farmId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ruleVersion": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "topCropId": {
+          "type": "string",
+          "enum": ["wheat", "maize", "sunflower", "soybean", "clover"]
+        },
+        "resultPayload": {
+          "type": "object"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "ownerId", "farmId", "ruleVersion", "topCropId", "resultPayload", "createdAt"]
+    },
+    "FarmReport": {
+      "title": "FarmReport",
+      "description": "Generated farmer-friendly or technical evidence report with source attribution and limitations.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "farmId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["farmer", "technical"]
+        },
+        "reportPayload": {
+          "type": "object"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "ownerId", "farmId", "mode", "reportPayload", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private user settings and profile document scoped strictly to the owning user."
+    },
+    "/users/{userId}/farms/{farmId}": {
+      "schema": { "$ref": "#/entities/Farm" },
+      "description": "User-owned farm boundaries, coordinates, crop history, and soil inputs."
+    },
+    "/users/{userId}/farms/{farmId}/environmentalRecords/{recordId}": {
+      "schema": { "$ref": "#/entities/EnvironmentalRecord" },
+      "description": "Cached real Earth-observation records for a specific farm."
+    },
+    "/users/{userId}/farms/{farmId}/scans/{scanId}": {
+      "schema": { "$ref": "#/entities/FieldScan" },
+      "description": "AI-assisted visual and OCR field scan results for a specific farm."
+    },
+    "/users/{userId}/farms/{farmId}/decisions/{decisionId}": {
+      "schema": { "$ref": "#/entities/DecisionRun" },
+      "description": "Persisted explainable decision engine evaluation snapshots."
+    },
+    "/users/{userId}/farms/{farmId}/reports/{reportId}": {
+      "schema": { "$ref": "#/entities/FarmReport" },
+      "description": "Exported farmer-friendly and technical evidence reports."
+    }
+  }
+}

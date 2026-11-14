@@ -1,0 +1,211 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedOwner(userId) {
+      return isSignedIn() && request.auth.token.email_verified == true && request.auth.uid == userId;
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'preferredLanguage', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'displayName', 'preferredLanguage', 'createdAt', 'updatedAt'])
+        && data.uid is string
+        && isValidId(data.uid)
+        && data.uid == userId
+        && data.preferredLanguage in ['en', 'ar']
+        && (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 120))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidCropEnum(val) {
+      return val in ['wheat', 'maize', 'sunflower', 'soybean', 'clover'];
+    }
+
+    function isValidFarm(data, userId, farmId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'name', 'centerLat', 'centerLng',
+          'locationAccuracyMode', 'season', 'waterAvailability', 'goal',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'name', 'locationLabel', 'centerLat', 'centerLng',
+          'locationAccuracyMode', 'boundary', 'areaHectares',
+          'previousCrop', 'currentCrop', 'season', 'waterAvailability', 'goal',
+          'soilData', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.id == farmId
+        && isValidId(data.ownerId)
+        && data.ownerId == userId
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 120
+        && (!('locationLabel' in data) || (data.locationLabel is string && data.locationLabel.size() <= 200))
+        && data.centerLat is number && data.centerLat >= -90 && data.centerLat <= 90
+        && data.centerLng is number && data.centerLng >= -180 && data.centerLng <= 180
+        && data.locationAccuracyMode in ['polygon', 'gps', 'point', 'approximate']
+        && (!('boundary' in data) || (data.boundary is list && data.boundary.size() <= 50))
+        && (!('areaHectares' in data) || (data.areaHectares is number && data.areaHectares >= 0 && data.areaHectares <= 1000000))
+        && (!('previousCrop' in data) || data.previousCrop in ['wheat', 'maize', 'sunflower', 'soybean', 'clover', 'fallow', 'unknown'])
+        && (!('currentCrop' in data) || data.currentCrop in ['wheat', 'maize', 'sunflower', 'soybean', 'clover', 'none', 'unknown'])
+        && data.season in ['winter', 'spring', 'summer', 'autumn']
+        && data.waterAvailability in ['abundant', 'moderate', 'limited', 'scarce']
+        && data.goal in ['yield_stability', 'water_conservation', 'soil_recovery', 'drought_resilience', 'forage_production']
+        && (!('soilData' in data) || data.soilData is map)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidEnvRecord(data, userId, farmId, recordId) {
+      return data.keys().hasAll(['id', 'ownerId', 'farmId', 'fetchedAt', 'sourceSummary', 'payload', 'createdAt'])
+        && data.keys().hasOnly(['id', 'ownerId', 'farmId', 'fetchedAt', 'sourceSummary', 'payload', 'createdAt'])
+        && isValidId(data.id) && data.id == recordId
+        && isValidId(data.ownerId) && data.ownerId == userId
+        && isValidId(data.farmId) && data.farmId == farmId
+        && data.fetchedAt is string && data.fetchedAt.size() <= 64
+        && data.sourceSummary is string && data.sourceSummary.size() <= 240
+        && data.payload is map
+        && data.createdAt is timestamp;
+    }
+
+    function isValidFieldScan(data, userId, farmId, scanId) {
+      return data.keys().hasAll(['id', 'ownerId', 'farmId', 'scanType', 'qualityStatus', 'resultPayload', 'createdAt'])
+        && data.keys().hasOnly(['id', 'ownerId', 'farmId', 'scanType', 'qualityStatus', 'detectedCrop', 'resultPayload', 'createdAt'])
+        && isValidId(data.id) && data.id == scanId
+        && isValidId(data.ownerId) && data.ownerId == userId
+        && isValidId(data.farmId) && data.farmId == farmId
+        && data.scanType in ['crop_photo', 'soil_surface', 'soil_report_ocr']
+        && data.qualityStatus in ['usable', 'low_quality', 'unsupported_crop', 'irrelevant']
+        && (!('detectedCrop' in data) || (data.detectedCrop is string && data.detectedCrop.size() <= 80))
+        && data.resultPayload is map
+        && data.createdAt is timestamp;
+    }
+
+    function isValidDecisionRun(data, userId, farmId, decisionId) {
+      return data.keys().hasAll(['id', 'ownerId', 'farmId', 'ruleVersion', 'topCropId', 'resultPayload', 'createdAt'])
+        && data.keys().hasOnly(['id', 'ownerId', 'farmId', 'ruleVersion', 'topCropId', 'resultPayload', 'createdAt'])
+        && isValidId(data.id) && data.id == decisionId
+        && isValidId(data.ownerId) && data.ownerId == userId
+        && isValidId(data.farmId) && data.farmId == farmId
+        && data.ruleVersion is string && data.ruleVersion.size() <= 64
+        && isValidCropEnum(data.topCropId)
+        && data.resultPayload is map
+        && data.createdAt is timestamp;
+    }
+
+    function isValidFarmReport(data, userId, farmId, reportId) {
+      return data.keys().hasAll(['id', 'ownerId', 'farmId', 'mode', 'reportPayload', 'createdAt'])
+        && data.keys().hasOnly(['id', 'ownerId', 'farmId', 'mode', 'reportPayload', 'createdAt'])
+        && isValidId(data.id) && data.id == reportId
+        && isValidId(data.ownerId) && data.ownerId == userId
+        && isValidId(data.farmId) && data.farmId == farmId
+        && data.mode in ['farmer', 'technical']
+        && data.reportPayload is map
+        && data.createdAt is timestamp;
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isVerifiedOwner(userId);
+      allow create: if isValidId(userId)
+        && isVerifiedOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId)
+        && isVerifiedOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'preferredLanguage', 'updatedAt']);
+      allow delete: if isValidId(userId) && isVerifiedOwner(userId);
+
+      match /farms/{farmId} {
+        allow get: if isValidId(userId) && isValidId(farmId) && isVerifiedOwner(userId) && existing().ownerId == request.auth.uid;
+        allow list: if isValidId(userId) && isVerifiedOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(farmId)
+          && isVerifiedOwner(userId)
+          && isValidFarm(incoming(), userId, farmId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId) && isValidId(farmId)
+          && isVerifiedOwner(userId)
+          && isValidFarm(incoming(), userId, farmId)
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'name', 'locationLabel', 'centerLat', 'centerLng', 'locationAccuracyMode',
+            'boundary', 'areaHectares', 'previousCrop', 'currentCrop', 'season',
+            'waterAvailability', 'goal', 'soilData', 'updatedAt'
+          ]);
+        allow delete: if isValidId(userId) && isValidId(farmId) && isVerifiedOwner(userId) && existing().ownerId == request.auth.uid;
+
+        match /environmentalRecords/{recordId} {
+          allow get: if isValidId(userId) && isValidId(farmId) && isValidId(recordId) && isVerifiedOwner(userId) && existing().ownerId == request.auth.uid;
+          allow list: if isValidId(userId) && isValidId(farmId) && isVerifiedOwner(userId) && resource.data.ownerId == request.auth.uid;
+          allow create: if isValidId(userId) && isValidId(farmId) && isValidId(recordId)
+            && isVerifiedOwner(userId)
+            && isValidEnvRecord(incoming(), userId, farmId, recordId)
+            && incoming().createdAt == request.time
+            && exists(/databases/$(database)/documents/users/$(userId)/farms/$(farmId));
+          allow delete: if isValidId(userId) && isValidId(farmId) && isValidId(recordId) && isVerifiedOwner(userId) && existing().ownerId == request.auth.uid;
+        }
+
+        match /scans/{scanId} {
+          allow get: if isValidId(userId) && isValidId(farmId) && isValidId(scanId) && isVerifiedOwner(userId) && existing().ownerId == request.auth.uid;
+          allow list: if isValidId(userId) && isValidId(farmId) && isVerifiedOwner(userId) && resource.data.ownerId == request.auth.uid;
+          allow create: if isValidId(userId) && isValidId(farmId) && isValidId(scanId)
+            && isVerifiedOwner(userId)
+            && isValidFieldScan(incoming(), userId, farmId, scanId)
+            && incoming().createdAt == request.time
+            && exists(/databases/$(database)/documents/users/$(userId)/farms/$(farmId));
+          allow delete: if isValidId(userId) && isValidId(farmId) && isValidId(scanId) && isVerifiedOwner(userId) && existing().ownerId == request.auth.uid;
+        }
+
+        match /decisions/{decisionId} {
+          allow get: if isValidId(userId) && isValidId(farmId) && isValidId(decisionId) && isVerifiedOwner(userId) && existing().ownerId == request.auth.uid;
+          allow list: if isValidId(userId) && isValidId(farmId) && isVerifiedOwner(userId) && resource.data.ownerId == request.auth.uid;
+          allow create: if isValidId(userId) && isValidId(farmId) && isValidId(decisionId)
+            && isVerifiedOwner(userId)
+            && isValidDecisionRun(incoming(), userId, farmId, decisionId)
+            && incoming().createdAt == request.time
+            && exists(/databases/$(database)/documents/users/$(userId)/farms/$(farmId));
+          allow delete: if isValidId(userId) && isValidId(farmId) && isValidId(decisionId) && isVerifiedOwner(userId) && existing().ownerId == request.auth.uid;
+        }
+
+        match /reports/{reportId} {
+          allow get: if isValidId(userId) && isValidId(farmId) && isValidId(reportId) && isVerifiedOwner(userId) && existing().ownerId == request.auth.uid;
+          allow list: if isValidId(userId) && isValidId(farmId) && isVerifiedOwner(userId) && resource.data.ownerId == request.auth.uid;
+          allow create: if isValidId(userId) && isValidId(farmId) && isValidId(reportId)
+            && isVerifiedOwner(userId)
+            && isValidFarmReport(incoming(), userId, farmId, reportId)
+            && incoming().createdAt == request.time
+            && exists(/databases/$(database)/documents/users/$(userId)/farms/$(farmId));
+          allow delete: if isValidId(userId) && isValidId(farmId) && isValidId(reportId) && isVerifiedOwner(userId) && existing().ownerId == request.auth.uid;
+        }
+      }
+    }
+  }
+}

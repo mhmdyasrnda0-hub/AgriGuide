@@ -1,0 +1,6 @@
+{
+  "name": "Field Shift",
+  "description": "Climate-smart agriculture decision-support platform transforming real Earth-observation data, field observations, and agronomic rules into explainable farming decisions.",
+  "requestFramePermissions": ["geolocation", "microphone", "camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
